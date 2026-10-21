@@ -65,3 +65,6 @@ export const UPDOWN_CLIENT_V15_HASH = createHash('sha256').update(readFileSync(U
 // version 16 (kanban #564): everything on the screen drawn by React - the same screen, its view in view/, built into the file
 export const UPDOWN_CLIENT_V16_FILE = new URL('../client/index-v16.html', import.meta.url);
 export const UPDOWN_CLIENT_V16_HASH = createHash('sha256').update(readFileSync(UPDOWN_CLIENT_V16_FILE)).digest();
+// version 17: version 16's file with its comments cleaned - no ticket numbers, no names; the code is version 16's
+export const UPDOWN_CLIENT_V17_FILE = new URL('../client/index-v17.html', import.meta.url);
+export const UPDOWN_CLIENT_V17_HASH = createHash('sha256').update(readFileSync(UPDOWN_CLIENT_V17_FILE)).digest();
