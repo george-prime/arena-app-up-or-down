@@ -118,10 +118,6 @@ document.getElementById('arena-lobby').insertAdjacentHTML('afterend', '<div id="
     // seats asked for nothing)
     const ROUNDS_READ = new Set();
     async function inBatches(list, n, fn) { for (let i = 0; i < list.length; i += n) await Promise.all(list.slice(i, i + n).map(fn)); }
-    // A SEAT THAT HOLDS THE ROUND'S BOOK (kanban #592, measured live 2026-10-23 19:57-20:01Z: a second tab of the same wallet never found its
-    // resting 10-cent order - only a book with filled positions counted, and a resting order fills none): positions, resting levels or batches
-    const holdsBook = (b) => !!b && ((b.positions || []).length + (b.batches || []).length
-      + ((b.levels && b.levels.buys) || []).length + ((b.levels && b.levels.sells) || []).length + (b.resting || []).length) > 0;
     async function restoreOrdersFromSeats() {
       const G = window.ARENA_GAME;
       if (!G || !G.market || !ARENACLIENT.myOrdersFromEntries || !window.ARENA_CURVE) return;
@@ -163,12 +159,14 @@ document.getElementById('arena-lobby').insertAdjacentHTML('afterend', '<div id="
         // THIS WALLET'S ORDERS BY ITS OWN KEYS, NOT EVERY ENTRY OF THE ROUND: a seat that holds the round's book (only its signer
         // seats do: three asked, the first that shows positions), then that seat asked which entries the locks of this wallet's
         // 8 order keys stake (GET /stake-lock, page-lock.js findLock); only those entries are read
+        // A SEAT THAT HOLDS THIS WALLET'S LOCKS (kanban #592, measured live 2026-10-23 20:44Z: no seat showed a book with anything in it - new
+        // orders wait in `pending` until a batch - while 7 of the round's 35 nodes held the order's lock): its first order key's lock asked of
+        // every node, three at a time, until one names it
         let seat = null;
-        // EVERY NODE OF THE ROUND, THREE AT A TIME, until one holds its book (kanban #592: only the first three were asked - a round lists ~25
-        // nodes and only its 7 signer seats hold its book, so a second tab found none when they were not among the first three)
+        const firstKey = ARENACLIENT.fromHex([...keys.keys()][0]);
         for (let j = 0; j < nodes.length && !seat; j += 3) {
-          const got = await Promise.all(nodes.slice(j, j + 3).map((n) => fetch(String(n).replace(/\/+$/, '') + '/book?round=' + r.id, { cache: 'no-store', signal: AbortSignal.timeout(5000) })
-            .then((x) => (x.ok ? x.json() : null)).then((b) => (holdsBook(b) ? n : null)).catch(() => null)));
+          const got = await Promise.all(nodes.slice(j, j + 3).map((n) => ARENACLIENT.findLock({ roundId: round.id, playerPubkey: firstKey, nodes: [n] })
+            .then((l) => (l && l.length ? n : null)).catch(() => null)));
           seat = got.find(Boolean) || null;
         }
         if (!seat) return;
