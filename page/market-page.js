@@ -112,6 +112,12 @@ document.getElementById('arena-lobby').insertAdjacentHTML('afterend', '<div id="
       }
     }
     window.ARENA_RESTORED_ORDERS = [];
+    // A CLOSED ROUND IS READ ONCE (nothing new can enter it), AND AT MOST 4 ROUNDS AT ONCE (measured 2026-10-23 16:2xZ with 20
+    // market bots: a new browser's first restore read every round of the last 24 h from all 14 seats and then every entry in each -
+    // the bots' too - about 2,000 requests in 5 s, most failing with ERR_INSUFFICIENT_RESOURCES, the page's CPU high and the
+    // seats asked for nothing)
+    const ROUNDS_READ = new Set();
+    async function inBatches(list, n, fn) { for (let i = 0; i < list.length; i += n) await Promise.all(list.slice(i, i + n).map(fn)); }
     async function restoreOrdersFromSeats() {
       const G = window.ARENA_GAME;
       if (!G || !G.market || !ARENACLIENT.myOrdersFromEntries || !window.ARENA_CURVE) return;
@@ -135,24 +141,32 @@ document.getElementById('arena-lobby').insertAdjacentHTML('afterend', '<div id="
       // rounds appeared 15-35 s after the page loaded - every round's book, then every entry in it, each player's, was read after the
       // one before, each from the first seat that answered): every round at once, and a round's entries at once, each asked first of a
       // different seat of the round's
-      await Promise.all(rows.map(async (r) => {
+      await inBatches(rows.filter((r) => !ROUNDS_READ.has(r.id)), 4, async (r) => {
+        if (Number(r.contract.entryCloseMs) < Date.now() - 60000) ROUNDS_READ.add(r.id);
         const round = Object.assign({}, r.contract, { id: ARENACLIENT.fromHex(r.id) });
         const keys = new Map();
         for (let i = 0; i < ORDER_KEYS; i++) { try { keys.set(ARENACLIENT.toHex(ARENACLIENT.playerFor(round, { seed, curve: window.ARENA_CURVE, order: i }).pubkey), i); } catch { /* no key */ } }
-        let book = null;
-        if (r.nodes) {   // a round from the seats' recent list: its book from those seats, the fullest answer
-          const got = (await Promise.all(r.nodes.map((n) => fetch(String(n).replace(/\/+$/, '') + '/book?round=' + r.id, { cache: 'no-store', signal: AbortSignal.timeout(5000) })
-            .then((x) => (x.ok ? x.json() : null)).catch(() => null)))).filter(Boolean);
-          const size = (b) => (b.batches || []).length + (b.positions || []).length;
-          book = got.length ? got.reduce((a, b) => (size(b) > size(a) ? b : a)) : null;
-        } else { try { book = await G.market.book(r.id); } catch { book = null; } }
-        if (!book) return;
-        const ids = [...new Set([...(book.positions || []).map((x) => x.entry), ...((book.resting && book.resting.buys) || [])])]
-          .filter((id) => id && !known.has(id) && !ENTRIES_SEEN.has(r.id + id));
-        if (!ids.length) return;
         const nodes = r.nodes || (window.ARENA_ROW_NODES ? window.ARENA_ROW_NODES(r.id) : []);
+        // THIS WALLET'S ORDERS BY ITS OWN KEYS, NOT EVERY ENTRY OF THE ROUND: a seat that holds the round's book (only its signer
+        // seats do: asked three at a time until one shows positions), then that seat asked which entries the locks of this wallet's
+        // 8 order keys stake (GET /stake-lock, page-lock.js findLock); only those entries are read
+        let seat = null;
+        for (let j = 0; j < nodes.length && !seat; j += 3) {
+          const got = await Promise.all(nodes.slice(j, j + 3).map((n) => fetch(String(n).replace(/\/+$/, '') + '/book?round=' + r.id, { cache: 'no-store', signal: AbortSignal.timeout(5000) })
+            .then((x) => (x.ok ? x.json() : null)).then((b) => (b && (b.positions || []).length ? n : null)).catch(() => null)));
+          seat = got.find(Boolean) || null;
+        }
+        if (!seat) return;
+        const ids = new Set();
+        for (const pk of keys.keys()) {
+          try {
+            const locks = await ARENACLIENT.findLock({ roundId: round.id, playerPubkey: ARENACLIENT.fromHex(pk), nodes: [seat] });
+            for (const l of locks) if (l.entryId && !known.has(l.entryId) && !ENTRIES_SEEN.has(r.id + l.entryId)) ids.add(l.entryId);
+          } catch { /* the next key */ }
+        }
+        if (!ids.size) return;
         const entries = [];
-        await Promise.all(ids.map(async (id, k) => {
+        await Promise.all([...ids].map(async (id, k) => {
           for (let j = 0; j < nodes.length; j++) {
             const n = nodes[(k + j) % nodes.length];
             try { const res = await fetch(String(n).replace(/\/+$/, '') + '/entry?id=' + id, { cache: 'no-store', signal: AbortSignal.timeout(5000) });
@@ -168,7 +182,7 @@ document.getElementById('arena-lobby').insertAdjacentHTML('afterend', '<div id="
           try { const k = 'arena.order.next.' + r.id; if ((Number(window.sessionStorage.getItem(k)) || 0) <= m.orderIndex) window.sessionStorage.setItem(k, String(m.orderIndex + 1)); } catch { /* this tab's only */ }
         }
         if (mine.length) { console.log('[arena] restored ' + mine.length + ' order(s) of round ' + r.id.slice(0, 16) + ' from its seats'); readMarketOutcomes().catch(() => {}); }
-      }));
+      });
     }
     // EVERY ORDER NAMED UNDER THE PLAYER (2026-10-17: "The leaderboard is still empty" - measured: each order of a
     // market joins under its own round key and was named under nobody, so the season listed every order as a stranger and the
