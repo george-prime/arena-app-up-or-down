@@ -68,3 +68,6 @@ export const UPDOWN_CLIENT_V16_HASH = createHash('sha256').update(readFileSync(U
 // version 17: version 16's file with its comments cleaned - no ticket numbers, no names; the code is version 16's
 export const UPDOWN_CLIENT_V17_FILE = new URL('../client/index-v17.html', import.meta.url);
 export const UPDOWN_CLIENT_V17_HASH = createHash('sha256').update(readFileSync(UPDOWN_CLIENT_V17_FILE)).digest();
+// version 18: both halves of the book - Buy or Sell, the sell sheet, My shares, the sells as cards
+export const UPDOWN_CLIENT_V18_FILE = new URL('../client/index-v18.html', import.meta.url);
+export const UPDOWN_CLIENT_V18_HASH = createHash('sha256').update(readFileSync(UPDOWN_CLIENT_V18_FILE)).digest();

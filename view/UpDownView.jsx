@@ -3,7 +3,8 @@
 // BITCOIN UP OR DOWN'S CLIENT, DRAWN BY REACT (version 16): everything version 15 built as markup and wrote by hand - the window's
 // question and prices, Buy Up / Buy Down, the buy sheet (Market: the amount and its steps; Limit: price, shares, expiry), the order's
 // progress, My orders as cards, the history and the past orders' table with their totals - drawn from one view model the client's
-// draw() makes each second and on every change. The client keeps the market (its rows, the book, the prices, the orders, what the sheet
+// draw() makes each second and on every change. Version 18 adds the other half of the book: Buy or Sell on the sheet, the sell sheet
+// (Market or Limit, the shares and Max, what it brings), My shares with a Sell on each side, and each sell as a card. The client keeps the market (its rows, the book, the prices, the orders, what the sheet
 // asks); these components hand every press and keystroke back through `on`. The classes and ids are version 15's: its CSS, unchanged.
 import React from 'react';
 
@@ -58,6 +59,29 @@ export function TotalsShort({ t }) {
       {t.pend ? ` · ${t.pend} pending` : ''}</>);
 }
 
+/** One sell as a card: { side, shares, limit, window, chip: [class, text] }. */
+export function SellCard({ c, outcomes }) {
+  return (
+    <div className="ord sell">
+      <span className={`sd ${sideCls(c.side)}`}>{sideMark(c.side)} {outcomes[c.side] || c.side}</span>
+      <div className="what"><b>Sell {c.shares}</b> <span className="lim">≥ {c.limit}¢</span><div className="win">{c.window}</div></div>
+      <div className="st"><span className={`chip2 ${c.chip[0]}`}>{c.chip[1]}</span></div>
+    </div>);
+}
+
+/** My shares in the window: per side { side, shares, avg, now, value, offered, canSell } - each with its Sell. */
+export function SharesCard({ rows, outcomes, onSell }) {
+  if (!rows.length) return null;
+  return (
+    <div className="card shares" id="shares"><h3>My shares</h3>
+      <table className="past"><thead><tr><th>Side</th><th className="n">Shares</th><th className="n">Avg</th><th className="n">Now</th><th className="n">Value</th><th /></tr></thead>
+        <tbody>{rows.map((r) => (
+          <tr key={r.side}><td className={`${sideCls(r.side)} nw`}>{sideMark(r.side)} {outcomes[r.side] || r.side}</td>
+            <td className="n">{r.shares}{r.offered ? <div className="sub">{r.offered} offered</div> : null}</td><td className="n">{r.avg}</td><td className="n">{r.now}</td><td className="n nw">{r.value}</td>
+            <td className="n">{r.canSell ? <button type="button" className="sellbtn" data-sell={r.side} onClick={() => onSell(r.side)}>Sell</button> : <span className="sub">{r.why}</span>}</td></tr>))}</tbody></table>
+    </div>);
+}
+
 /** The buy sheet: Market (the amount, its steps and To win) or Limit (price, shares, expiry, Total, To win), the error, Buy and its progress. */
 export class Sheet extends React.Component {
   render() {
@@ -65,11 +89,24 @@ export class Sheet extends React.Component {
     const f = v.form;
     return (
       <div className="sheet">
-        <div className="top"><span className="pill" id="mode">{v.modeLabel}</span><button type="button" className="gear" id="gear" aria-label="order type" onClick={on.menu}>⚙︎</button></div>
+        <div className="top">
+          <div className="bs" role="group" aria-label="buy or sell">
+            {['buy', 'sell'].map((d) => <button type="button" key={d} data-dir={d} className={v.dir === d ? 'on' : undefined} aria-pressed={String(v.dir === d)} onClick={() => on.dir(d)}>{d === 'buy' ? 'Buy' : 'Sell'}</button>)}
+          </div>
+          <span><span className="pill" id="mode">{v.modeLabel}</span><button type="button" className="gear" id="gear" aria-label="order type" onClick={on.menu}>⚙︎</button></span></div>
         <div className={`menu${v.menuOpen ? ' open' : ''}`} id="menu">
           {['market', 'limit'].map((m) => <button type="button" key={m} data-mode={m} className={v.mode === m ? 'on' : undefined} onClick={() => on.mode(m)}>{m === 'market' ? 'Market' : 'Limit'}</button>)}
         </div>
-        <div id="market" hidden={v.mode !== 'market'}>
+        <div id="sell" hidden={v.dir !== 'sell'}>
+          <div className="line"><span>You hold</span><span><b id="held">{v.held}</b> <button type="button" className="max" id="max" onClick={on.max}>Max</button></span></div>
+          <div className="line" hidden={v.mode !== 'limit'}><span>Limit price</span><span className="stepper"><button type="button" data-slp="-1" onClick={() => on.slp(-1)}>−</button>
+            <input id="slp" inputMode="numeric" value={f.slp} onChange={(e) => on.input('slp', e.target.value)} /><button type="button" data-slp="1" onClick={() => on.slp(1)}>+</button></span></div>
+          <div className="line"><span>Shares</span><input id="ssh" inputMode="numeric" value={f.ssh} onChange={(e) => on.input('ssh', e.target.value)} /></div>
+          <div className="chips" style={{ justifyContent: 'flex-end' }}>{[-10, 10, 100].map((n) => <button type="button" key={n} data-ssh={n} onClick={() => on.ssh(n)}>{n < 0 ? `−${-n}` : `+${n}`}</button>)}</div>
+          <div className="line"><span>You'll receive</span><span className="bigwin" id="sget">{v.sget}</span></div>
+          <div className="center sub" id="snote">{v.snote}</div>
+        </div>
+        <div id="market" hidden={v.dir !== 'buy' || v.mode !== 'market'}>
           <div className="amount"><button type="button" className="step" data-step="-1" aria-label="less" onClick={() => on.step(-1)}>−</button>
             <input id="amt" inputMode="numeric" value={f.amt} aria-label="amount in sats" onChange={(e) => on.input('amt', e.target.value)} />
             <button type="button" className="step" data-step="1" aria-label="more" onClick={() => on.step(1)}>+</button></div>
@@ -77,12 +114,12 @@ export class Sheet extends React.Component {
           <div className="chips">{[100, 500, 1000, 10000].map((n) => <button type="button" key={n} data-add={n} onClick={() => on.add(n)}>+{n.toLocaleString('en-US')}</button>)}</div>
           <div className="center">To win <span className="win" id="mwin">{v.mwin}</span> <span className="sub" id="mprice">{v.mprice}</span></div>
         </div>
-        <div id="limit" hidden={v.mode !== 'limit'}>
+        <div id="limit" hidden={v.dir !== 'buy' || v.mode !== 'limit'}>
           <div className="line"><span>Limit price</span><span className="stepper"><button type="button" data-lp="-1" onClick={() => on.lp(-1)}>−</button>
             <input id="lp" inputMode="numeric" value={f.lp} onChange={(e) => on.input('lp', e.target.value)} /><button type="button" data-lp="1" onClick={() => on.lp(1)}>+</button></span></div>
           <div className="line"><span>Shares</span><input id="sh" inputMode="numeric" value={f.sh} onChange={(e) => on.input('sh', e.target.value)} /></div>
           <div className="chips" style={{ justifyContent: 'flex-end' }}>{[-100, -10, 10, 100].map((n) => <button type="button" key={n} data-sh={n} onClick={() => on.sh(n)}>{n < 0 ? `−${-n}` : `+${n}`}</button>)}</div>
-          <div className="line"><span className="sub">Expires</span><select id="exp" value={f.exp} onChange={(e) => on.input('exp', e.target.value)}><option value="0">at the close</option><option value="60000">in 1 min</option></select></div>
+          <div className="line"><span className="sub">Expires</span><select id="exp" value={f.exp} onChange={(e) => on.input('exp', e.target.value)}><option value="0">at the close</option><option value="60000">in 1 min</option><option value="300000">in 5 min</option></select></div>
           <div className="line"><span>Total</span><span className="total" id="ltotal">{v.ltotal}</span></div>
           <div className="line"><span>To win</span><span className="bigwin" id="lwin">{v.lwin}</span></div>
         </div>
@@ -117,13 +154,15 @@ export class UpDownView extends React.Component {
         </div>
         <div className="colR">
           <div className="sides">
-            {[0, 1].map((i) => <button type="button" key={i} className={`side ${i === 0 ? 'up' : 'down'}${v.pick === i ? ' on' : ''}`} id={`s${i}`} onClick={() => on.pick(i)}>Buy {o[i]} <span id={`p${i}`}>{v.prices[i]}</span></button>)}
+            {[0, 1].map((i) => <button type="button" key={i} className={`side ${i === 0 ? 'up' : 'down'}${v.pick === i ? ' on' : ''}`} id={`s${i}`} onClick={() => on.pick(i)}>{v.dir === 'sell' ? 'Sell' : 'Buy'} {o[i]} <span id={`p${i}`}>{v.prices[i]}</span></button>)}
           </div>
           <Sheet v={v} on={on} />
-          <div className="card list"><h3>My orders</h3>
+          <SharesCard rows={v.shares || []} outcomes={o} onSell={on.sellSide} />
+          <div className="card list"><h3>My orders{v.cancelAll ? <button type="button" className="cancelall" id="cancelall" disabled={!!v.cancelAll.busy} onClick={on.cancelAll}>Cancel all</button> : null}</h3>
             <div id="mine" className="ords">
               {v.flight ? <OrderCard c={v.flight} outcomes={o} onCancel={on.cancel} /> : null}
               {v.open.map((c) => <OrderCard key={c.key} c={c} outcomes={o} onCancel={on.cancel} />)}
+              {(v.sells || []).map((c) => <SellCard key={c.key} c={c} outcomes={o} />)}
               {v.mineEmpty ? <div className="sub">{v.mineEmpty}</div> : null}
             </div>
             <div className="hist" id="histhead" hidden={!v.past.length}><h3>History</h3>
