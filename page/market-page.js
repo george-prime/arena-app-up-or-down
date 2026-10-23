@@ -141,17 +141,20 @@ document.getElementById('arena-lobby').insertAdjacentHTML('afterend', '<div id="
       // rounds appeared 15-35 s after the page loaded - every round's book, then every entry in it, each player's, was read after the
       // one before, each from the first seat that answered): every round at once, and a round's entries at once, each asked first of a
       // different seat of the round's
-      await inBatches(rows.filter((r) => !ROUNDS_READ.has(r.id)), 4, async (r) => {
+      // 12 ROUNDS A PASS, NEWEST FIRST (three hours of windows a pass; the older ones on the passes after): an order this browser
+      // placed itself is in its collect records and Settings' Rescan anyway - this read is for orders placed on another device
+      const newest = rows.filter((r) => !ROUNDS_READ.has(r.id)).sort((a, b) => Number(b.contract.entryCloseMs) - Number(a.contract.entryCloseMs)).slice(0, 12);
+      await inBatches(newest, 4, async (r) => {
         if (Number(r.contract.entryCloseMs) < Date.now() - 60000) ROUNDS_READ.add(r.id);
         const round = Object.assign({}, r.contract, { id: ARENACLIENT.fromHex(r.id) });
         const keys = new Map();
         for (let i = 0; i < ORDER_KEYS; i++) { try { keys.set(ARENACLIENT.toHex(ARENACLIENT.playerFor(round, { seed, curve: window.ARENA_CURVE, order: i }).pubkey), i); } catch { /* no key */ } }
         const nodes = r.nodes || (window.ARENA_ROW_NODES ? window.ARENA_ROW_NODES(r.id) : []);
         // THIS WALLET'S ORDERS BY ITS OWN KEYS, NOT EVERY ENTRY OF THE ROUND: a seat that holds the round's book (only its signer
-        // seats do: asked three at a time until one shows positions), then that seat asked which entries the locks of this wallet's
+        // seats do: three asked, the first that shows positions), then that seat asked which entries the locks of this wallet's
         // 8 order keys stake (GET /stake-lock, page-lock.js findLock); only those entries are read
         let seat = null;
-        for (let j = 0; j < nodes.length && !seat; j += 3) {
+        for (let j = 0; j < Math.min(3, nodes.length) && !seat; j += 3) {
           const got = await Promise.all(nodes.slice(j, j + 3).map((n) => fetch(String(n).replace(/\/+$/, '') + '/book?round=' + r.id, { cache: 'no-store', signal: AbortSignal.timeout(5000) })
             .then((x) => (x.ok ? x.json() : null)).then((b) => (b && (b.positions || []).length ? n : null)).catch(() => null)));
           seat = got.find(Boolean) || null;
@@ -205,7 +208,7 @@ document.getElementById('arena-lobby').insertAdjacentHTML('afterend', '<div id="
     let restoring = null;
     const restoreOnce = () => { if (!restoring) restoring = restoreOrdersFromSeats().catch((e) => console.warn('[arena] orders from the seats: ' + e.message)).finally(() => { restoring = null; }); };
     setTimeout(restoreOnce, 4000);
-    setInterval(restoreOnce, 15000);
+    setInterval(restoreOnce, 60000);   // once a minute (kanban #594: every 15 s, with every round's book from every seat, it was most of the page's requests)
     // the lobby's market lines (Unity draws them under the round rows, as the collect lines)
     let QUIET_ORDERS = new Set();
     function marketViewLines(onlyThisGame = false) {
