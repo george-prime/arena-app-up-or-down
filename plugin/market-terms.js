@@ -71,3 +71,6 @@ export const UPDOWN_CLIENT_V17_HASH = createHash('sha256').update(readFileSync(U
 // version 18: both halves of the book - Buy or Sell, the sell sheet, My shares, the sells as cards
 export const UPDOWN_CLIENT_V18_FILE = new URL('../client/index-v18.html', import.meta.url);
 export const UPDOWN_CLIENT_V18_HASH = createHash('sha256').update(readFileSync(UPDOWN_CLIENT_V18_FILE)).digest();
+// version 19: version 18 with a cancel on each resting sell
+export const UPDOWN_CLIENT_V19_FILE = new URL('../client/index-v19.html', import.meta.url);
+export const UPDOWN_CLIENT_V19_HASH = createHash('sha256').update(readFileSync(UPDOWN_CLIENT_V19_FILE)).digest();
