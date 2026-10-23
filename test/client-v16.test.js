@@ -15,7 +15,9 @@ const SRC = readFileSync(new URL('../client/src-v16.js', import.meta.url), 'utf8
 const BUNDLE = new URL('../dist/updown-view.js', import.meta.url);
 const script = V16.slice(V16.lastIndexOf('<script>'));
 
-test('the file is what the tool writes (when the view is built here)', { skip: !existsSync(BUNDLE) && 'tools/build-view.mjs not run' }, () => {
+// the view has moved on since (version 18 draws Sell too): the file is rebuilt only from the bundle it carries
+const bundleIsV16 = existsSync(BUNDLE) && V16.includes(readFileSync(BUNDLE, 'utf8').trim());
+test('the file is what the tool writes (when the view is built here)', { skip: !bundleIsV16 && 'tools/build-view.mjs not run, or the view is a later version\'s' }, () => {
   assert.equal(buildV16(V15, SRC, readFileSync(BUNDLE, 'utf8')), V16, 'client/index-v16.html is out of date: run tools/build-client-v16.mjs');
 });
 
