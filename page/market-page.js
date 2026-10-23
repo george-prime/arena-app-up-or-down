@@ -147,7 +147,13 @@ document.getElementById('arena-lobby').insertAdjacentHTML('afterend', '<div id="
       // different seat of the round's
       // 12 ROUNDS A PASS, NEWEST FIRST (three hours of windows a pass; the older ones on the passes after): an order this browser
       // placed itself is in its collect records and Settings' Rescan anyway - this read is for orders placed on another device
-      const newest = rows.filter((r) => !ROUNDS_READ.has(r.id)).sort((a, b) => Number(b.contract.entryCloseMs) - Number(a.contract.entryCloseMs)).slice(0, 12);
+      // THE ROUNDS AN ORDER CAN BE IN FIRST (kanban #592, measured live 2026-10-23 20:2xZ: a second tab of a wallet with 8 orders in the open
+      // window restored none - the 12 rounds with the latest close were always the series' next 72 h, where nobody holds an order yet, and
+      // the open window never came up): the open, joinable ones closing soonest first, then the closed ones newest first
+      const now = Date.now(), closeOf = (r) => Number(r.contract.entryCloseMs);
+      const open = rows.filter((r) => !ROUNDS_READ.has(r.id) && closeOf(r) >= now && r.joinable !== false).sort((a, b) => closeOf(a) - closeOf(b));
+      const shut = rows.filter((r) => !ROUNDS_READ.has(r.id) && closeOf(r) < now).sort((a, b) => closeOf(b) - closeOf(a));
+      const newest = [...open, ...shut].slice(0, 12);
       await inBatches(newest, 4, async (r) => {
         if (Number(r.contract.entryCloseMs) < Date.now() - 60000) ROUNDS_READ.add(r.id);
         const round = Object.assign({}, r.contract, { id: ARENACLIENT.fromHex(r.id) });
@@ -158,7 +164,9 @@ document.getElementById('arena-lobby').insertAdjacentHTML('afterend', '<div id="
         // seats do: three asked, the first that shows positions), then that seat asked which entries the locks of this wallet's
         // 8 order keys stake (GET /stake-lock, page-lock.js findLock); only those entries are read
         let seat = null;
-        for (let j = 0; j < Math.min(3, nodes.length) && !seat; j += 3) {
+        // EVERY NODE OF THE ROUND, THREE AT A TIME, until one holds its book (kanban #592: only the first three were asked - a round lists ~25
+        // nodes and only its 7 signer seats hold its book, so a second tab found none when they were not among the first three)
+        for (let j = 0; j < nodes.length && !seat; j += 3) {
           const got = await Promise.all(nodes.slice(j, j + 3).map((n) => fetch(String(n).replace(/\/+$/, '') + '/book?round=' + r.id, { cache: 'no-store', signal: AbortSignal.timeout(5000) })
             .then((x) => (x.ok ? x.json() : null)).then((b) => (holdsBook(b) ? n : null)).catch(() => null)));
           seat = got.find(Boolean) || null;
