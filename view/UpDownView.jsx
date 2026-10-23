@@ -59,13 +59,15 @@ export function TotalsShort({ t }) {
       {t.pend ? ` · ${t.pend} pending` : ''}</>);
 }
 
-/** One sell as a card: { side, shares, limit, window, chip: [class, text] }. */
-export function SellCard({ c, outcomes }) {
+/** One sell as a card: { side, shares, limit, window, chip: [class, text], cancel: { entry, busy } | null } - version 19: a resting sell
+ *  is cancelled with its order (the order's cancel takes its resting buy and sells out of the book). */
+export function SellCard({ c, outcomes, onCancel }) {
   return (
     <div className="ord sell">
       <span className={`sd ${sideCls(c.side)}`}>{sideMark(c.side)} {outcomes[c.side] || c.side}</span>
       <div className="what"><b>Sell {c.shares}</b> <span className="lim">≥ {c.limit}¢</span><div className="win">{c.window}</div></div>
-      <div className="st"><span className={`chip2 ${c.chip[0]}`}>{c.chip[1]}</span></div>
+      <div className="st"><span className={`chip2 ${c.chip[0]}`}>{c.chip[1]}</span>
+        {c.cancel && onCancel ? <button type="button" data-cancel-sell={c.key} disabled={!!c.cancel.busy} onClick={() => onCancel(c.cancel.entry)}>cancel</button> : null}</div>
     </div>);
 }
 
@@ -162,7 +164,7 @@ export class UpDownView extends React.Component {
             <div id="mine" className="ords">
               {v.flight ? <OrderCard c={v.flight} outcomes={o} onCancel={on.cancel} /> : null}
               {v.open.map((c) => <OrderCard key={c.key} c={c} outcomes={o} onCancel={on.cancel} />)}
-              {(v.sells || []).map((c) => <SellCard key={c.key} c={c} outcomes={o} />)}
+              {(v.sells || []).map((c) => <SellCard key={c.key} c={c} outcomes={o} onCancel={on.cancel} />)}
               {v.mineEmpty ? <div className="sub">{v.mineEmpty}</div> : null}
             </div>
             <div className="hist" id="histhead" hidden={!v.past.length}><h3>History</h3>

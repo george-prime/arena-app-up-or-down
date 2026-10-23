@@ -22,7 +22,9 @@ const SRC = readFileSync(new URL('../client/src-v18.js', import.meta.url), 'utf8
 const BUNDLE = new URL('../dist/updown-view.js', import.meta.url);
 const script = V18.slice(V18.lastIndexOf('<script>'));
 
-test('the file is what the tool writes (when the view is built here)', { skip: !existsSync(BUNDLE) && 'tools/build-view.mjs not run' }, () => {
+// the view has moved on since (version 19 cancels a resting sell): the file is rebuilt only from the bundle it carries
+const bundleIsV18 = existsSync(BUNDLE) && V18.includes(readFileSync(BUNDLE, 'utf8').trim());
+test('the file is what the tool writes (when the view is built here)', { skip: !bundleIsV18 && 'tools/build-view.mjs not run, or the view is a later version\'s' }, () => {
   assert.equal(buildV18(V15, SRC, readFileSync(BUNDLE, 'utf8')), V18, 'client/index-v18.html is out of date: run tools/build-client-v18.mjs');
 });
 
