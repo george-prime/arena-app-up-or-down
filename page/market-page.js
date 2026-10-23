@@ -118,6 +118,10 @@ document.getElementById('arena-lobby').insertAdjacentHTML('afterend', '<div id="
     // seats asked for nothing)
     const ROUNDS_READ = new Set();
     async function inBatches(list, n, fn) { for (let i = 0; i < list.length; i += n) await Promise.all(list.slice(i, i + n).map(fn)); }
+    // A SEAT THAT HOLDS THE ROUND'S BOOK (kanban #592, measured live 2026-10-23 19:57-20:01Z: a second tab of the same wallet never found its
+    // resting 10-cent order - only a book with filled positions counted, and a resting order fills none): positions, resting levels or batches
+    const holdsBook = (b) => !!b && ((b.positions || []).length + (b.batches || []).length
+      + ((b.levels && b.levels.buys) || []).length + ((b.levels && b.levels.sells) || []).length + (b.resting || []).length) > 0;
     async function restoreOrdersFromSeats() {
       const G = window.ARENA_GAME;
       if (!G || !G.market || !ARENACLIENT.myOrdersFromEntries || !window.ARENA_CURVE) return;
@@ -156,7 +160,7 @@ document.getElementById('arena-lobby').insertAdjacentHTML('afterend', '<div id="
         let seat = null;
         for (let j = 0; j < Math.min(3, nodes.length) && !seat; j += 3) {
           const got = await Promise.all(nodes.slice(j, j + 3).map((n) => fetch(String(n).replace(/\/+$/, '') + '/book?round=' + r.id, { cache: 'no-store', signal: AbortSignal.timeout(5000) })
-            .then((x) => (x.ok ? x.json() : null)).then((b) => (b && (b.positions || []).length ? n : null)).catch(() => null)));
+            .then((x) => (x.ok ? x.json() : null)).then((b) => (holdsBook(b) ? n : null)).catch(() => null)));
           seat = got.find(Boolean) || null;
         }
         if (!seat) return;
