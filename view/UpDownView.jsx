@@ -15,11 +15,20 @@ const sideCls = (side) => (side === 0 ? 'up' : 'down');
 export const KindChip = ({ text }) => <span className="chip" id="kind">{text}</span>;
 
 /** One order as a card: { side, amount, limit, window, chip: [class, text], cancel: { entry, busy } | null, cls }. */
+/** HOW LONG AN ORDER TOOK (version 21, Daniel 2026-10-24: "Display the order accept time and lock time here as well so we don't have to
+ *  guess how long it took"): from the press - accepted (placed on enough seats) and its lock (accepted by the guardians), in seconds. */
+export function timingLine(t) {
+  if (!t) return '';
+  const s = (ms) => (Number(ms) / 1000).toFixed(1) + ' s';
+  return [t.placedMs !== undefined ? 'accepted ' + s(t.placedMs) : t.submittedMs !== undefined ? 'sent ' + s(t.submittedMs) : '',
+    t.lockMs !== undefined ? 'lock ' + s(t.lockMs) : ''].filter(Boolean).join(' · ');
+}
 export function OrderCard({ c, outcomes, onCancel }) {
   return (
     <div className={`ord${c.cls || ''}`}>
       <span className={`sd ${sideCls(c.side)}`}>{sideMark(c.side)} {outcomes[c.side] || c.side}</span>
-      <div className="what"><b>{c.amount}</b> <span className="lim">≤ {c.limit}¢</span><div className="win">{c.window}</div></div>
+      <div className="what"><b>{c.amount}</b> <span className="lim">≤ {c.limit}¢</span><div className="win">{c.window}</div>
+        {timingLine(c.timing) ? <div className="tm">{timingLine(c.timing)}</div> : null}</div>
       <div className="st"><span className={`chip2 ${c.chip[0]}`}>{c.chip[1]}</span>
         {c.cancel ? <button type="button" data-cancel={c.cancel.entry} disabled={!!c.cancel.busy} onClick={() => onCancel(c.cancel.entry)}>cancel</button> : null}</div>
     </div>);
@@ -33,6 +42,7 @@ export function PastCard({ p, outcomes }) {
         <b className="rd">{p.window}</b><span className={`fin${p.final ? '' : ' pend'}`}>{p.status}</span></div>
       <div className="pg"><div><span>Stake</span><b>{p.stake}</b></div><div><span>Result</span><b>{p.result}</b></div>
         <div><span>P/L</span><b className={p.plCls}>{p.pl}</b></div></div>
+      {timingLine(p.timing) ? <div className="tm">{timingLine(p.timing)}</div> : null}
     </div>);
 }
 
@@ -40,11 +50,11 @@ export function PastCard({ p, outcomes }) {
 export function PastTable({ past, outcomes }) {
   if (!past.length) return <div className="sub">No past orders yet: an order shows here once its round has a result.</div>;
   return (
-    <table className="past"><thead><tr><th>Round</th><th>Side</th><th className="n">Stake</th><th>Result</th><th className="n">P/L</th><th>Status</th></tr></thead>
+    <table className="past"><thead><tr><th>Round</th><th>Side</th><th className="n">Stake</th><th>Result</th><th className="n">P/L</th><th>Status</th><th>Timing</th></tr></thead>
       <tbody>{past.map((p) => (
         <tr key={p.entry}><td>{p.window}</td><td className={sideCls(p.side)}>{sideMark(p.side)} {outcomes[p.side] || p.side}</td>
           <td className="n">{p.stake} <span className="sub">≤ {p.limit}¢</span></td><td>{p.result}</td><td className={`n ${p.plCls}`}>{p.pl}</td>
-          <td className={p.final ? '' : 'pend'}>{p.status}</td></tr>))}</tbody></table>);
+          <td className={p.final ? '' : 'pend'}>{p.status}</td><td className="tm">{timingLine(p.timing) || '–'}</td></tr>))}</tbody></table>);
 }
 
 /** The totals: { count, won, lost, net, wonNum, lostNum, netNum, pend } - the full words, and on a phone one short line. */

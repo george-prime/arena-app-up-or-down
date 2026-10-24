@@ -74,3 +74,6 @@ export const UPDOWN_CLIENT_V18_HASH = createHash('sha256').update(readFileSync(U
 // version 19: version 18 with a cancel on each resting sell
 export const UPDOWN_CLIENT_V19_FILE = new URL('../client/index-v19.html', import.meta.url);
 export const UPDOWN_CLIENT_V19_HASH = createHash('sha256').update(readFileSync(UPDOWN_CLIENT_V19_FILE)).digest();
+// version 21: version 19 with each order's times from the press (accepted, its lock)
+export const UPDOWN_CLIENT_V21_FILE = new URL('../client/index-v21.html', import.meta.url);
+export const UPDOWN_CLIENT_V21_HASH = createHash('sha256').update(readFileSync(UPDOWN_CLIENT_V21_FILE)).digest();
