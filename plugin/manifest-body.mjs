@@ -1,6 +1,6 @@
-// BITCOIN UP OR DOWN 15M ON TESTNET4: ITS MANIFEST BODY (kanban #293 step 1), as its developer signs it with the dev client:
-//   node packages/arena-donor/bin/arena-donor.mjs sign ~/.config/blwp/updown-tn4/dev packages/btc-updown/plugin/manifest-body.mjs
-// then the printed hex into updown-tn4-manifest.js. The market is the regtest test market's (#236/#237) in every term -
+// BITCOIN UP OR DOWN 15M ON TESTNET4: ITS MANIFEST BODY, as its developer signs it with the dev client:
+//   node packages/arena-donor/bin/arena-donor.mjs sign <the developer key folder> packages/btc-updown/plugin/manifest-body.mjs
+// then the printed hex into updown-tn4-manifest.js. The market is the regtest test market's in every term -
 // question, source rule, fees, its 15-minute period, outcomes, 2 of 3 - and its client byte for byte (frozen by hash), but
 // with keys of its own: its developer's and three attestors' (attestors.js), never the regtest market's public test words.
 // Its developer donation goes to testnet4's donation key set, as nextblock's and Rock Paper Scissors' do.
