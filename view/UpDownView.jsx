@@ -24,12 +24,19 @@ export function timingLine(t) {
   return [t.submittedMs !== undefined ? 'submitted ' + s(t.submittedMs) : '', t.placedMs !== undefined ? 'placed ' + s(t.placedMs) : '',
     t.lockMs !== undefined ? 'lock ' + s(t.lockMs) : ''].filter(Boolean).join(' · ');
 }
+/** AN ORDER'S TRANSACTION ID, SHORT, TO THE EXPLORER IN A NEW WINDOW (version 23, the owner 2026-10-24: "Die UI braucht die tx ids, stark
+ *  verkürzt mit link zum Explorer (in a new window). Auch die up down Seite, alle past orders und pending"). */
+export const EXPLORER = 'https://explorer.bitcoin-arena.io/tx/';
+export function TxLink({ id }) {
+  if (!/^[0-9a-f]{64}$/.test(String(id || ''))) return null;
+  return <a className="tx" href={EXPLORER + id} target="_blank" rel="noopener noreferrer" title={'Transaction ' + id + ' in the explorer'}>tx {id.slice(0, 6)}…</a>;
+}
 export function OrderCard({ c, outcomes, onCancel }) {
   return (
     <div className={`ord${c.cls || ''}`}>
       <span className={`sd ${sideCls(c.side)}`}>{sideMark(c.side)} {outcomes[c.side] || c.side}</span>
       <div className="what"><b>{c.amount}</b> <span className="lim">≤ {c.limit}¢</span><div className="win">{c.window}</div>
-        {timingLine(c.timing) ? <div className="tm">{timingLine(c.timing)}</div> : null}</div>
+        <div className="tm">{timingLine(c.timing)}{timingLine(c.timing) && c.tx ? ' · ' : ''}<TxLink id={c.tx} /></div></div>
       <div className="st"><span className={`chip2 ${c.chip[0]}`}>{c.chip[1]}</span>
         {c.cancel ? <button type="button" data-cancel={c.cancel.entry} disabled={!!c.cancel.busy} onClick={() => onCancel(c.cancel.entry)}>cancel</button> : null}</div>
     </div>);
@@ -43,7 +50,7 @@ export function PastCard({ p, outcomes }) {
         <b className="rd">{p.window}</b><span className={`fin${p.final ? '' : ' pend'}`}>{p.status}</span></div>
       <div className="pg"><div><span>Stake</span><b>{p.stake}</b></div><div><span>Result</span><b>{p.result}</b></div>
         <div><span>P/L</span><b className={p.plCls}>{p.pl}</b></div></div>
-      {timingLine(p.timing) ? <div className="tm">{timingLine(p.timing)}</div> : null}
+      <div className="tm">{timingLine(p.timing)}{timingLine(p.timing) ? ' · ' : ''}<TxLink id={p.entry} /></div>
     </div>);
 }
 
@@ -51,11 +58,11 @@ export function PastCard({ p, outcomes }) {
 export function PastTable({ past, outcomes }) {
   if (!past.length) return <div className="sub">No past orders yet: an order shows here once its round has a result.</div>;
   return (
-    <table className="past"><thead><tr><th>Round</th><th>Side</th><th className="n">Stake</th><th>Result</th><th className="n">P/L</th><th>Status</th><th>Timing</th></tr></thead>
+    <table className="past"><thead><tr><th>Round</th><th>Side</th><th className="n">Stake</th><th>Result</th><th className="n">P/L</th><th>Status</th><th>Timing</th><th>Tx</th></tr></thead>
       <tbody>{past.map((p) => (
         <tr key={p.entry}><td>{p.window}</td><td className={sideCls(p.side)}>{sideMark(p.side)} {outcomes[p.side] || p.side}</td>
           <td className="n">{p.stake} <span className="sub">≤ {p.limit}¢</span></td><td>{p.result}</td><td className={`n ${p.plCls}`}>{p.pl}</td>
-          <td className={p.final ? '' : 'pend'}>{p.status}</td><td className="tm">{timingLine(p.timing) || '–'}</td></tr>))}</tbody></table>);
+          <td className={p.final ? '' : 'pend'}>{p.status}</td><td className="tm">{timingLine(p.timing) || '–'}</td><td className="tm"><TxLink id={p.entry} /></td></tr>))}</tbody></table>);
 }
 
 /** The totals: { count, won, lost, net, wonNum, lostNum, netNum, pend } - the full words, and on a phone one short line. */
