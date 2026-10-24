@@ -1,4 +1,4 @@
-// BTC-UPDOWN-15M AT 2026.0.2 (kanban #348, RULED Daniel 2026-10-13: "The version bump is 2026.0.2 with new market and game
+// BTC-UPDOWN-15M AT 2026.0.2 (RULED 2026-10-13: "The version bump is 2026.0.2 with new market and game
 // ids"): the same game - cores, client, info, donation set - under manifest version 2, whose parent is 672415c8 and which
 // requires protocol version 2, the round that names no draw. Signed with the game's developer key; a node that does not
 // speak version 2 cannot host it, and a round of it at an older version is refused (manifest.js roundFitsManifest).

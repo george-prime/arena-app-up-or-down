@@ -1,4 +1,4 @@
-// Bitcoin Up or Down's description and website, signed by its developer key (kanban #276; arena-donor/bin/sign-game-info.mjs).
+// Bitcoin Up or Down's description and website, signed by its developer key (arena-donor/bin/sign-game-info.mjs).
 // Beside the manifest, not in it: game 672415c8 keeps its id.
 export const INFO = Object.freeze({
   "description": "Will the bitcoin price be higher at the end of the 15-minute window? Pick Up or Down; the attestors sign the price and the winning side shares the pot.",
