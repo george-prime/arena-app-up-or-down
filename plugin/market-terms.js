@@ -80,3 +80,6 @@ export const UPDOWN_CLIENT_V21_HASH = createHash('sha256').update(readFileSync(U
 // version 22: version 21 with the card's times named as the note names them (submitted, placed, lock)
 export const UPDOWN_CLIENT_V22_FILE = new URL('../client/index-v22.html', import.meta.url);
 export const UPDOWN_CLIENT_V22_HASH = createHash('sha256').update(readFileSync(UPDOWN_CLIENT_V22_FILE)).digest();
+// version 23: version 22 with each order's transaction id to the explorer, and a past order's times kept after a reload
+export const UPDOWN_CLIENT_V23_FILE = new URL('../client/index-v23.html', import.meta.url);
+export const UPDOWN_CLIENT_V23_HASH = createHash('sha256').update(readFileSync(UPDOWN_CLIENT_V23_FILE)).digest();
