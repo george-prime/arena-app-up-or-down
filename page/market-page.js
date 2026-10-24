@@ -68,6 +68,8 @@ document.getElementById('arena-lobby').insertAdjacentHTML('afterend', '<div id="
             if (o.attestation || o.gameOutcome) o.check = ARENACLIENT.checkMarketOutcome ? await ARENACLIENT.checkMarketOutcome({ outcome: o, market,
               roundIdHex: p.roundIdHex, sourceRoundIdHex: p.sourceRoundIdHex || null, entryCloseMs: p.entryCloseMs,
               verifySchnorr: (sig, msg, key) => window.ARENA_CURVE.verify(sig, msg, key),
+              // a market whose attestors are drawn per round (#630): the round's 7, derived here from the chain and census
+              roundAttestors: ARENACLIENT.roundAttestors ? (rid) => ARENACLIENT.roundAttestors(rid, p.nodes || [], { curve: window.ARENA_CURVE }) : null,
               // a series source round (Tick Tock's): its series' template from the seats, believed once it hashes to the series id
               sourceSeries: (sid) => ARENACLIENT.fetchSeriesTemplate({ seriesIdHex: sid, nodes: p.nodes || [], fetcher: (u, o) => fetch(u, o),
                 timeout: (ms) => (AbortSignal.timeout ? AbortSignal.timeout(ms) : undefined) }),

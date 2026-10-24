@@ -25,6 +25,7 @@
     "plugin/btc-updown-v19.js",
     "plugin/btc-updown-v21.js",
     "plugin/btc-updown-v22.js",
-    "plugin/btc-updown-v23.js"
+    "plugin/btc-updown-v23.js",
+    "plugin/btc-updown-v24.js"
   ]
 }
