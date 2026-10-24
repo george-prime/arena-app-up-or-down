@@ -15,12 +15,13 @@ const sideCls = (side) => (side === 0 ? 'up' : 'down');
 export const KindChip = ({ text }) => <span className="chip" id="kind">{text}</span>;
 
 /** One order as a card: { side, amount, limit, window, chip: [class, text], cancel: { entry, busy } | null, cls }. */
-/** HOW LONG AN ORDER TOOK (version 21, Daniel 2026-10-24: "Display the order accept time and lock time here as well so we don't have to
- *  guess how long it took"): from the press - accepted (placed on enough seats) and its lock (accepted by the guardians), in seconds. */
+/** HOW LONG AN ORDER TOOK, FROM THE PRESS (version 21, Daniel 2026-10-24: "Display the order accept time and lock time"; version 22, the same day:
+ *  "ich seh keine 0.5s submitted. Es muss submitted und lock dastehen" - the card names what the note at the foot says): submitted to the
+ *  first seat, placed on enough seats, its lock accepted by the guardians, in seconds to two places. */
 export function timingLine(t) {
   if (!t) return '';
-  const s = (ms) => (Number(ms) / 1000).toFixed(1) + ' s';
-  return [t.placedMs !== undefined ? 'accepted ' + s(t.placedMs) : t.submittedMs !== undefined ? 'sent ' + s(t.submittedMs) : '',
+  const s = (ms) => (Number(ms) / 1000).toFixed(2) + ' s';
+  return [t.submittedMs !== undefined ? 'submitted ' + s(t.submittedMs) : '', t.placedMs !== undefined ? 'placed ' + s(t.placedMs) : '',
     t.lockMs !== undefined ? 'lock ' + s(t.lockMs) : ''].filter(Boolean).join(' · ');
 }
 export function OrderCard({ c, outcomes, onCancel }) {

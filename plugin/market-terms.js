@@ -77,3 +77,6 @@ export const UPDOWN_CLIENT_V19_HASH = createHash('sha256').update(readFileSync(U
 // version 21: version 19 with each order's times from the press (accepted, its lock)
 export const UPDOWN_CLIENT_V21_FILE = new URL('../client/index-v21.html', import.meta.url);
 export const UPDOWN_CLIENT_V21_HASH = createHash('sha256').update(readFileSync(UPDOWN_CLIENT_V21_FILE)).digest();
+// version 22: version 21 with the card's times named as the note names them (submitted, placed, lock)
+export const UPDOWN_CLIENT_V22_FILE = new URL('../client/index-v22.html', import.meta.url);
+export const UPDOWN_CLIENT_V22_HASH = createHash('sha256').update(readFileSync(UPDOWN_CLIENT_V22_FILE)).digest();
