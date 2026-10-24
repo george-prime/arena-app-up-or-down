@@ -2,7 +2,7 @@
 // Copyright (c) 2026 The Bitcoin Arena authors. See LICENSE.
 // BITCOIN UP OR DOWN'S MANIFEST VERSION 24, SIGNED BY ITS DEVELOPER: version 23 in every term but who attests its outcome - no fixed keys
 // any more: each round's 7 attestors are drawn from its census, an outcome standing with 5 of them (kanban #630, Daniel 2026-10-24:
-// "pre deterministic and drawed randomly, not a fixed set of nodes ... 5 of 7"). Requires protocol version 21. Parent: version 23.
+// "pre deterministic and drawed randomly, not a fixed set of nodes ... 5 of 7"). Requires protocol version 2, as version 23. Parent: version 23.
 //
 //   node tools/sign-manifest-v24.mjs <dev dir holding game-dev.pkcs8>
 //
@@ -22,7 +22,7 @@ if (toHex(dev.pubkey) !== toHex(MANIFEST_V23.gameDevPubkey)) throw new Error(`th
 const { signature, ...v23body } = MANIFEST_V23;
 void signature;
 const body = { ...v23body, version: MANIFEST_V23.version + 1, parentManifestId: GAME_ID_V23,
-  attestors: [], attestThreshold: 0, attestDraw: { count: 7, threshold: 5 }, requiredProtocolVersion: 21 };
+  attestors: [], attestThreshold: 0, attestDraw: { count: 7, threshold: 5 } };
 const manifest = signManifest(body, dev);
 const stands = manifestStands(manifest, { verify: verifyEd25519, parentOf: (id) => (toHex(id) === toHex(GAME_ID_V23) ? MANIFEST_V23 : null) });
 if (!stands.ok) throw new Error(stands.why);
