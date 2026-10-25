@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: LicenseRef-Bitcoin-Arena-1.0
 // Copyright (c) 2026 The Bitcoin Arena authors. See LICENSE.
-// BITCOIN UP OR DOWN'S MANIFEST VERSION 16, SIGNED BY ITS DEVELOPER (kanban #564, Daniel 2026-10-21: "Make sure to fix all game clients
+// BITCOIN UP OR DOWN'S MANIFEST VERSION 16, SIGNED BY ITS DEVELOPER (kanban #564, 2026-10-21: "Make sure to fix all game clients
 // to react"): version 15 in every term, with its new client - everything on the screen drawn by React (client/index-v16.html, written by
 // tools/build-client-v16.mjs) - beside the older ones. Parent: version 15.
 //

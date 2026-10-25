@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: LicenseRef-Bitcoin-Arena-1.0
 // Copyright (c) 2026 The Bitcoin Arena authors. See LICENSE.
 // BITCOIN UP OR DOWN'S MANIFEST VERSION 24, SIGNED BY ITS DEVELOPER: version 23 in every term but who attests its outcome - no fixed keys
-// any more: each round's 7 attestors are drawn from its census, an outcome standing with 5 of them (kanban #630, Daniel 2026-10-24:
+// any more: each round's 7 attestors are drawn from its census, an outcome standing with 5 of them (kanban #630, 2026-10-24:
 // "pre deterministic and drawed randomly, not a fixed set of nodes ... 5 of 7"). Requires protocol version 2, as version 23. Parent: version 23.
 //
 //   node tools/sign-manifest-v24.mjs <dev dir holding game-dev.pkcs8>
