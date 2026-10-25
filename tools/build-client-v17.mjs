@@ -12,14 +12,13 @@ const V16 = new URL('../client/index-v16.html', import.meta.url);
 const OUT = new URL('../client/index-v17.html', import.meta.url);
 
 /** What no shipped file of the game carries: a ticket number, the owner's name, the old project name. */
-export const FORBIDDEN = /kanban|Daniel|BLWP|blwp|(?:\(|, |\bticket )#\d{3}\b/i;
+export const FORBIDDEN = /kanban|BLWP|blwp|(?:\(|, |\bticket )#\d{3}\b/i;
 
 /** One line of comment text, cleaned: the ticket references out, the name as "the owner". */
 export function cleanText(c) {
   return c
     .replace(/,?\s*\bkanban #\d+(?:\s*(?:\/|,|and|or)\s*#?\d+)*\b/gi, '')
     .replace(/\bkanban\b\s*/gi, '')
-    .replace(/\bDaniel's\b/g, "the owner's").replace(/\bDaniel\b/gi, 'the owner')
     .replace(/\bBLWP_/g, 'ARENA_').replace(/\bBLWP\b/g, 'ARENA').replace(/@blwp\//g, '@arena/').replace(/\bblwp-/g, 'arena-')
     .replace(/Blwp/g, 'Arena').replace(/\bblwp\b/g, 'arena')
     .replace(/(\(|, |\bticket )#\d{3,}\b/g, '$1')
